@@ -1,62 +1,107 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
-void sort(int a[], int n)
+// Bubble Sort - Ascending Order
+void bubbleSortAsc(int arr[], int n)
 {
-    int i, j, t;
+    int i, j, temp;
     for (i = 0; i < n - 1; i++)
+    {
         for (j = 0; j < n - i - 1; j++)
-            if (a[j] > a[j + 1])
+        {
+            if (arr[j] > arr[j + 1])
             {
-                t = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = t;
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
             }
+        }
+    }
 }
-void print_array(int a[], int n)
+
+// Bubble Sort - Descending Order
+void bubbleSortDesc(int arr[], int n)
 {
-    int i;
-    for (i = 0; i < n; i++)
-        printf("%d ", a[i]);
-    printf("\n");
+    int i, j, temp;
+
+    for (i = 0; i < n - 1; i++)
+    {
+        for (j = 0; j < n - i - 1; j++)
+        {
+            if (arr[j] < arr[j + 1])
+            {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
 }
-int main(void)
+
+int main()
 {
-    int a[100], n, i;
-    pid_t pid;
+    int n, i;
+    int arr[100];
 
-    printf("How many integers (1-100)? ");
-    if (scanf("%d", &n) != 1 || n < 1 || n > 100)
-        return 1;
-    printf("Enter integers: ");
+    printf("Enter number of elements: ");
+    scanf("%d", &n);
+
+    printf("Enter %d integers:\n", n);
+
     for (i = 0; i < n; i++)
-        if (scanf("%d", &a[i]) != 1)
-            return 1;
+    {
+        scanf("%d", &arr[i]);
+    }
 
-    pid = fork();
+    pid_t pid = fork();
+
     if (pid < 0)
     {
-        perror("fork");
+        printf("Fork failed!\n");
         return 1;
     }
 
-    if (pid == 0)
+    else if (pid == 0)
     {
-        printf("\nChild (PID %d) sorting: ", getpid());
-        sort(a, n);
-        print_array(a, n);
-        _exit(0);
+        // Child Process
+        printf("\nChild Process (PID: %d)\n", getpid());
+
+        bubbleSortDesc(arr, n);
+
+        printf("Child Sorted Array (Descending): ");
+
+        for (i = 0; i < n; i++)
+        {
+            printf("%d ", arr[i]);
+        }
+
+        printf("\n");
+
+        exit(0);
     }
+
     else
     {
-        printf("Parent (PID %d) sorting: ", getpid());
-        sort(a, n);
-        print_array(a, n);
+        // Parent Process
+        printf("\nParent Process (PID: %d)\n", getpid());
+
+        bubbleSortAsc(arr, n);
+
+        printf("Parent Sorted Array (Ascending): ");
+
+        for (i = 0; i < n; i++)
+        {
+            printf("%d ", arr[i]);
+        }
+
+        printf("\n");
+
         wait(NULL);
-        printf("Parent: child finished; wait() returned.\n");
+
+        printf("Parent: Child process completed.\n");
     }
+
     return 0;
 }
