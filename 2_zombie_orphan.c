@@ -1,30 +1,52 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
-int main(void) {
+int main()
+{
     pid_t pid = fork();
-    if (pid < 0) { perror("fork"); return 1; }
 
-    if (pid == 0) {
-        printf("Child PID=%d, initial PPID=%d\n", getpid(), getppid());
-        sleep(3);
-        printf("Child PID=%d, PPID after parent exits=%d (orphan demo)\n",
-               getpid(), getppid());
-        return 0;
-    } else {
-        printf("Parent PID=%d, child PID=%d\n", getpid(), pid);
-        printf("Parent exits now; child may become an orphan.\n");
-        /* Parent deliberately does not wait in this branch. */
-        sleep(1);
-        return 0;
+    if (pid == 0)
+    {
+        // Child Process
+        printf("Child PID: %d\n", getpid());
+        printf("Parent PID: %d\n", getppid());
+
+        sleep(10);
+
+        printf("Child running. New Parent PID: %d\n", getppid());
     }
+    else if (pid > 0)
+    {
+        // Parent Process
+        printf("Parent PID: %d\n", getpid());
+
+        sleep(2);
+
+        // CHANGE THIS LINE FOR ZOMBIE / ORPHAN
+        exit(0);
+    }
+
+    return 0;
 }
+
 /*
-To observe a zombie separately, temporarily replace the parent branch with:
-    sleep(10);   // child exits, parent stays alive without wait()
-Then run `ps -o pid,ppid,state,cmd -p CHILD_PID`; state Z means zombie.
-Do not call wait() until after observing the zombie.
+ZOMBIE DEMONSTRATION:
+1. In child, change sleep(10) to sleep(2).
+2. In parent, replace exit(0) with:
+       sleep(20);
+       wait(NULL);
+3. During the parent's sleep, check:
+       ps -el | grep Z
+4. Child terminates first, but parent hasn't called wait() yet.
+   Therefore, child becomes a zombie.
+
+ORPHAN DEMONSTRATION:
+1. Keep child sleep(10) unchanged.
+2. Keep parent exit(0) unchanged.
+3. Parent terminates first while child is still running.
+4. Child becomes an orphan and gets adopted by a
+   system process or configured subreaper.
+5. Observe the new PPID printed by the child.
 */
