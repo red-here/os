@@ -1,77 +1,103 @@
+
 #include <stdio.h>
 
-int main(void)
+int main()
 {
-    int n, m, i, j, k;
+    int n, m;
     int alloc[10][10], max[10][10], need[10][10];
-    int avail[10], finish[10] = {0}, safe[10], count = 0;
+    int avail[10], finish[10] = {0};
+    int safe[10], count = 0;
 
-    printf("Enter number of processes and resource types (max 10 each): ");
-    scanf("%d%d", &n, &m);
-    if (n < 1 || n > 10 || m < 1 || m > 10)
-    {
-        printf("Invalid size.\n");
-        return 1;
-    }
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
 
-    printf("Enter Allocation matrix (%d x %d):\n", n, m);
-    for (i = 0; i < n; i++)
-        for (j = 0; j < m; j++)
+    printf("Enter number of resources: ");
+    scanf("%d", &m);
+
+    // Allocation Matrix
+    printf("Enter Allocation Matrix:\n");
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
             scanf("%d", &alloc[i][j]);
 
-    printf("Enter Maximum matrix (%d x %d):\n", n, m);
-    for (i = 0; i < n; i++)
-        for (j = 0; j < m; j++)
+    // Maximum Matrix
+    printf("Enter Maximum Matrix:\n");
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
             scanf("%d", &max[i][j]);
 
-    printf("Enter Available resources (%d values): ", m);
-    for (j = 0; j < m; j++)
+    // Available Resources
+    printf("Enter Available Resources:\n");
+    for (int j = 0; j < m; j++)
         scanf("%d", &avail[j]);
 
-    for (i = 0; i < n; i++)
-        for (j = 0; j < m; j++)
-        {
+    // Calculate Need Matrix
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
             need[i][j] = max[i][j] - alloc[i][j];
-            if (need[i][j] < 0)
-            {
-                printf("Error: allocation exceeds maximum.\n");
-                return 1;
-            }
-        }
 
-    for (k = 0; k < n; k++)
+    // Display Need Matrix
+    printf("\nNeed Matrix:\n");
+    for (int i = 0; i < n; i++)
     {
-        for (i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            printf("%d ", need[i][j]);
+
+        printf("\n");
+    }
+
+    // Banker's Safety Algorithm
+    while (count < n)
+    {
+        int found = 0;
+
+        for (int i = 0; i < n; i++)
         {
-            if (!finish[i])
+            if (finish[i] == 0)
             {
-                int possible = 1;
+                int j;
+
                 for (j = 0; j < m; j++)
-                    if (need[i][j] > avail[j])
-                        possible = 0;
-                if (possible)
                 {
-                    for (j = 0; j < m; j++)
-                        avail[j] += alloc[i][j];
+                    if (need[i][j] > avail[j])
+                        break;
+                }
+
+                if (j == m)
+                {
+                    for (int k = 0; k < m; k++)
+                        avail[k] += alloc[i][k];
+
                     safe[count++] = i;
                     finish[i] = 1;
+                    found = 1;
                 }
             }
         }
+
+        if (found == 0)
+            break;
     }
 
+    // Display Safe Sequence
     if (count == n)
     {
-        printf("System is in a SAFE state.\nSafe sequence: ");
-        for (i = 0; i < n; i++)
-            printf("P%d%s", safe[i], i == n - 1 ? "\n" : " -> ");
+        printf("\nSystem is in SAFE STATE\n");
+        printf("Safe Sequence: ");
+
+        for (int i = 0; i < n; i++)
+            printf("P%d ", safe[i]);
     }
     else
     {
-        printf("System is in an UNSAFE state; no safe sequence found.\n");
+        printf("\nSystem is in UNSAFE STATE");
     }
+
+    printf("\n");
+
     return 0;
 }
+
 
 // Enter number of processes: 5
 // Enter number of resource types: 3
