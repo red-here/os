@@ -1,42 +1,45 @@
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 int main()
 {
-    int fd, n;
-    char text[200];
-    char result[500];
+    int fd1, fd2;
+    char str[500];
+    char buffer[100];
 
-    // Send sentences to Process 2
-    fd = open("/tmp/fifo1", O_WRONLY);
+    // Open FIFO1 for writing
+    fd1 = open("fifo1", O_WRONLY);
 
-    printf("Enter sentences (type END to finish):\n");
+    printf("Enter sentences (type END to stop):\n");
 
-    while (fgets(text, sizeof(text), stdin))
+    while (1)
     {
-        if (strcmp(text, "END\n") == 0 ||
-            strcmp(text, "END") == 0)
+        fgets(str, sizeof(str), stdin);
+
+        if (strcmp(str, "END\n") == 0)
             break;
 
-        write(fd, text, strlen(text));
+        write(fd1, str, strlen(str));
     }
 
-    close(fd);
+    close(fd1);
 
-    // Receive results from Process 2
-    fd = open("/tmp/fifo2", O_RDONLY);
+    // Open FIFO2 for reading
+    fd2 = open("fifo2", O_RDONLY);
 
-    printf("\nResults received from Process 2:\n");
+    printf("\nResult from Process 2:\n");
 
-    while ((n = read(fd, result, sizeof(result) - 1)) > 0)
+    int n;
+    while ((n = read(fd2, buffer, sizeof(buffer))) > 0)
     {
-        result[n] = '\0';
-        printf("%s", result);
+        write(STDOUT_FILENO, buffer, n);
     }
 
-    close(fd);
+    close(fd2);
 
     return 0;
 }
