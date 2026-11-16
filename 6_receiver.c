@@ -14,9 +14,18 @@ int main()
 
     p1 = open("f1", O_RDONLY);
 
+    printf("Receiver waiting for messages...\n");
+
     while (1)
     {
-        read(p1, str, sizeof(str));
+        int n = read(p1, str, sizeof(str) - 1);
+
+        if (n <= 0)
+            break;
+
+        str[n] = '\0';
+
+        printf("Received: %s", str);
 
         if (strcmp(str, "END\n") == 0)
             break;
@@ -43,6 +52,8 @@ int main()
 
     fclose(fp);
 
+    printf("\nResults calculated and saved in result.txt\n");
+
     fp = fopen("result.txt", "r");
     p2 = open("f2", O_WRONLY);
 
@@ -51,6 +62,8 @@ int main()
 
     fclose(fp);
     close(p2);
+
+    printf("Results sent back to sender!\n");
 
     return 0;
 }
