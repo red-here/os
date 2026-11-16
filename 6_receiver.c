@@ -1,70 +1,56 @@
-
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <ctype.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/stat.h>
 
 int main()
 {
-    int fd1, fd2;
-    char buffer[100];
-    int characters = 0, words = 0, lines = 0;
-    int inword = 0, n;
-    char last = '\0';
+    int p1, p2, ch = 0, words = 0, lines = 0;
+    char str[100];
 
-    // Open FIFO1 for reading
-    fd1 = open("fifo1", O_RDONLY);
+    mkfifo("f1", 0666);
+    mkfifo("f2", 0666);
 
-    while ((n = read(fd1, buffer, sizeof(buffer))) > 0)
+    p1 = open("f1", O_RDONLY);
+
+    while (1)
     {
-        for (int i = 0; i < n; i++)
+        read(p1, str, sizeof(str));
+
+        if (strcmp(str, "END\n") == 0)
+            break;
+
+        ch += strlen(str);
+        lines++;
+
+        for (int i = 0; str[i] != '\0'; i++)
         {
-            char ch = buffer[i];
-
-            characters++;
-            last = ch;
-
-            if (ch == '\n')
-                lines++;
-
-            if (isspace((unsigned char)ch))
-                inword = 0;
-            else if (inword == 0)
-            {
+            if (str[i] == ' ' || str[i] == '\n')
                 words++;
-                inword = 1;
-            }
         }
     }
 
-    close(fd1);
+    words++;
 
-    if (characters > 0 && last != '\n')
-        lines++;
+    close(p1);
 
-    // Write results into file
-    FILE *fp = fopen("output.txt", "w");
+    FILE *fp = fopen("result.txt", "w");
 
-    fprintf(fp, "Characters: %d\n", characters);
-    fprintf(fp, "Words: %d\n", words);
-    fprintf(fp, "Lines: %d\n", lines);
+    fprintf(fp, "Characters = %d\n", ch);
+    fprintf(fp, "Words = %d\n", words);
+    fprintf(fp, "Lines = %d\n", lines);
 
     fclose(fp);
 
-    // Read contents of file
-    fp = fopen("output.txt", "r");
+    fp = fopen("result.txt", "r");
+    p2 = open("f2", O_WRONLY);
 
-    // Open FIFO2 for writing
-    fd2 = open("fifo2", O_WRONLY);
-
-    while ((n = fread(buffer, 1, sizeof(buffer), fp)) > 0)
-    {
-        write(fd2, buffer, n);
-    }
+    while (fgets(str, sizeof(str), fp))
+        write(p2, str, strlen(str));
 
     fclose(fp);
-    close(fd2);
+    close(p2);
 
     return 0;
 }

@@ -1,45 +1,34 @@
-
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 int main()
 {
-    int fd1, fd2;
-    char str[500];
-    char buffer[100];
+    int p1, p2;
+    char str[100], result[200];
 
-    // Open FIFO1 for writing
-    fd1 = open("fifo1", O_WRONLY);
+    p1 = open("f1", O_WRONLY);
 
-    printf("Enter sentences (type END to stop):\n");
+    printf("Enter sentences (END to stop):\n");
 
     while (1)
     {
-        fgets(str, sizeof(str), stdin);
+        fgets(str, 100, stdin);
+        write(p1, str, strlen(str) + 1);
 
         if (strcmp(str, "END\n") == 0)
             break;
-
-        write(fd1, str, strlen(str));
     }
 
-    close(fd1);
+    close(p1);
 
-    // Open FIFO2 for reading
-    fd2 = open("fifo2", O_RDONLY);
+    p2 = open("f2", O_RDONLY);
 
-    printf("\nResult from Process 2:\n");
+    read(p2, result, sizeof(result));
+    printf("\nResult:\n%s", result);
 
-    int n;
-    while ((n = read(fd2, buffer, sizeof(buffer))) > 0)
-    {
-        write(STDOUT_FILENO, buffer, n);
-    }
-
-    close(fd2);
+    close(p2);
 
     return 0;
 }
