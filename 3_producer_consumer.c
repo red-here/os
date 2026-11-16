@@ -12,7 +12,6 @@ int in = 0, out = 0;
 sem_t empty, full;
 pthread_mutex_t mutex;
 
-// Producer Thread
 void *producer(void *arg)
 {
     int item;
@@ -27,7 +26,10 @@ void *producer(void *arg)
         buffer[in] = item;
         printf("Produced: %d\n", item);
 
-        in = (in + 1) % SIZE;
+        in++;
+
+        if (in == SIZE)
+            in = 0;
 
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
@@ -36,7 +38,6 @@ void *producer(void *arg)
     return NULL;
 }
 
-// Consumer Thread
 void *consumer(void *arg)
 {
     int item;
@@ -49,7 +50,10 @@ void *consumer(void *arg)
         item = buffer[out];
         printf("Consumed: %d\n", item);
 
-        out = (out + 1) % SIZE;
+        out++;
+
+        if (out == SIZE)
+            out = 0;
 
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
@@ -62,16 +66,13 @@ int main()
 {
     pthread_t p, c;
 
-    // Initialize semaphores and mutex
     sem_init(&empty, 0, SIZE);
     sem_init(&full, 0, 0);
     pthread_mutex_init(&mutex, NULL);
 
-    // Create producer and consumer threads
     pthread_create(&p, NULL, producer, NULL);
     pthread_create(&c, NULL, consumer, NULL);
 
-    // Wait for both threads
     pthread_join(p, NULL);
     pthread_join(c, NULL);
 
